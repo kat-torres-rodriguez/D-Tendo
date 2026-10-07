@@ -330,7 +330,7 @@ function missionsHTML() {
     </div>
     ${open.length ? open.map(missionCard).join('') : `<div class="empty"><span class="big">🌿</span>¡No hay misiones pendientes aquí! El bosque está en paz.</div>`}
     <div class="panel-actions">
-      <button class="btn ${g ? 'teal' : 'ghost'}" data-act="newMission">${g ? '➕ Nueva misión' : '🙋 Pedir ayuda a un guardián'}</button>
+      <button class="btn teal" data-act="newMission">➕ Nueva misión</button>
     </div>
     ${done.length ? `<div class="sub">✔ Completadas</div>${done.map(missionCard).join('')}` : ''}
   </section>`;
@@ -348,14 +348,14 @@ function missionCard(x) {
     <div class="grow">
       <div class="title">${esc(x.title)}</div>
       <div class="meta">
-        ${x.xp ? `<span class="chip xp">✦ ${x.xp} XP</span>` : `<span class="chip">🙋 petición</span>`}
+        ${x.xp ? `<span class="chip xp">✦ ${x.xp} XP</span>` : `<span class="chip warn">✦ XP por asignar</span>`}
         <span class="chip">${FREQ_LABEL[x.freq] || 'Una vez'}</span>
         ${x.due && x.freq === 'once' ? `<span class="chip ${overdue ? 'bad' : ''}">📅 ${esc(x.due.slice(5).split('-').reverse().join('/'))}</span>` : ''}
         ${who ? `<span class="chip">${avatarHTML(who, 'xs')} ${esc(who.name)}</span>` : `<span class="chip">👥 Cualquiera</span>`}
         ${doneBy ? `<span class="chip">✔ ${esc(doneBy.name)}</span>` : ''}
       </div>
     </div>
-    ${done ? `<span class="stamp">¡HECHO!</span>${isGuardian() ? `<button class="bubble xs gem-red" data-act="undoMission" data-id="${x.id}" title="Deshacer">↺</button>` : ''}`
+    ${done ? `<div class="done-actions"><span class="stamp">¡HECHO!</span>${isGuardian() ? `<button class="btn small danger" data-act="undoMission" data-id="${x.id}" title="Revertir: vuelve a quedar pendiente">↺ Revertir</button>` : ''}</div>`
       : canDo ? `<button class="bubble gem-teal" data-act="complete" data-id="${x.id}" title="Marcar como realizada">✓</button>` : ''}
     ${isGuardian() && !done ? `<button class="bubble xs gem-amber" data-act="editMission" data-id="${x.id}" title="Editar">✎</button>` : ''}
   </div>`;
@@ -370,19 +370,24 @@ function completeMission(id, btn) {
     [`missions/${id}/doneAt`]: Date.now(),
     [`missions/${id}/doneBy`]: me,
     [`missions/${id}/lastDone`]: x.freq === 'weekly' ? weekKey() : dayKey(),
+    [`missions/${id}/awarded`]: xp,
   };
   const before = levelInfo(m.xp).lvl;
   const nm = structuredClone(m);
-  nm.xp = (nm.xp || 0) + xp; nm.done = (nm.done || 0) + 1;
-  Object.assign(c, streakChanges(nm), {
-    [`members/${me}/xp`]: store.inc(xp), [`members/${me}/coins`]: store.inc(xp), [`members/${me}/done`]: store.inc(1),
-  });
-  const newMedals = medalChanges(nm, c);
+  let newMedals = [];
+  // Las misiones sin XP (aún no aprobadas por un guardián) no suman racha, conteo ni medallas.
+  if (xp > 0) {
+    nm.xp = (nm.xp || 0) + xp; nm.done = (nm.done || 0) + 1;
+    Object.assign(c, streakChanges(nm), {
+      [`members/${me}/xp`]: store.inc(xp), [`members/${me}/coins`]: store.inc(xp), [`members/${me}/done`]: store.inc(1),
+    });
+    newMedals = medalChanges(nm, c);
+  }
   c[`notes/${uid()}`] = { system: true, text: `⚔️ ${m.name} completó «${x.title}»${xp ? ` (+${xp} XP)` : ''}`, ts: Date.now() };
   store.update(c);
 
   const r = btn?.getBoundingClientRect();
-  if (r) { burst(r.left + r.width / 2, r.top + r.height / 2, 28); floatText(r.left, r.top, `+${xp} XP`); }
+  if (r) { burst(r.left + r.width / 2, r.top + r.height / 2, 28); if (xp) floatText(r.left, r.top, `+${xp} XP`); }
   chime();
   queueCelebration({ icon: x.icon || '🏅', title: '¡Misión cumplida!', text: x.title, xp });
   if (levelInfo(nm.xp).lvl > before) queueCelebration({ icon: '⭐', title: `¡Nivel ${levelInfo(nm.xp).lvl}!`, text: `Ahora eres ${levelInfo(nm.xp).title}` });
@@ -391,16 +396,21 @@ function completeMission(id, btn) {
 
 function undoMission(id) {
   const x = S.missions[id];
-  if (!x || !confirm('¿Deshacer esta misión? Se le restarán los puntos a quien la completó.')) return;
+  if (!x) return;
   const who = x.doneBy;
-  const xp = Number(x.xp) || 0;
+  const xp = Number(x.awarded ?? x.xp) || 0;
+  const whoName = memberById(who)?.name;
+  if (!confirm(`¿Revertir «${x.title}»? Volverá a quedar pendiente${whoName && xp ? ` y se le restarán ${xp} XP a ${whoName}` : ''}.`)) return;
   const c = { [`missions/${id}/doneAt`]: null, [`missions/${id}/doneBy`]: null, [`missions/${id}/lastDone`]: null };
-  if (who && memberById(who)) {
+  c[`missions/${id}/awarded`] = null;
+  if (who && memberById(who) && xp > 0) {
     c[`members/${who}/xp`] = store.inc(-xp);
     c[`members/${who}/coins`] = store.inc(-xp);
     c[`members/${who}/done`] = store.inc(-1);
   }
+  c[`notes/${uid()}`] = { system: true, text: `↺ ${meM().name} revirtió «${x.title}»: vuelve a estar pendiente`, ts: Date.now() };
   store.update(c);
+  toast('↺ Misión revertida');
 }
 
 function currentStreak(m) {
@@ -438,25 +448,27 @@ function awardStat(stat, xp, label) {
   return c;
 }
 
+// Todos pueden crear misiones; solo los guardianes las modifican, borran y les ponen XP.
 function missionForm(id) {
   const x = id ? S.missions[id] : null;
   const g = isGuardian();
-  const st = { icon: x?.icon || (g ? '🧹' : '🙋'), freq: x?.freq || 'once' };
-  const opts = (g ? members() : members().filter(m => m.role === 'guardian'))
-    .map(m => `<option value="${m.id}" ${x?.assignee === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
-  openModal(g ? (x ? 'Editar misión' : 'Nueva misión') : 'Pedir ayuda', `
+  if (x && !g) return;
+  const st = { icon: x?.icon || '🧹', freq: x?.freq || 'once' };
+  const opts = members().map(m => `<option value="${m.id}" ${(x ? x.assignee === m.id : m.id === me) ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
+  openModal(x ? 'Editar misión' : 'Nueva misión', `
     <form id="mf">
-      <div class="field"><label>${g ? 'Misión' : '¿Qué necesitas?'}</label><input type="text" name="title" required maxlength="60" value="${esc(x?.title || '')}" placeholder="${g ? 'Lavar los platos' : 'Llevarme al entrenamiento el sábado'}"></div>
-      <div class="field"><label>Ícono</label><div class="picker" data-pick="icon">${(g ? MISSION_ICONS : ['🙋', '🚗', '💸', '📚', '🍕', '🎮', '🛒', '❤️']).map(i => `<button type="button" class="${i === st.icon ? 'on' : ''}" data-v="${i}">${i}</button>`).join('')}</div></div>
-      <div class="field"><label>${g ? 'Asignar a' : 'Para'}</label><select name="assignee">${g ? `<option value="all" ${x?.assignee === 'all' ? 'selected' : ''}>👥 Cualquiera</option>` : ''}${opts}</select></div>
-      ${g ? `<div class="row">
-        <div class="field"><label>Puntos (XP)</label><input type="number" name="xp" min="0" max="500" step="5" value="${x?.xp ?? 20}"></div>
+      <div class="field"><label>Misión</label><input type="text" name="title" required maxlength="60" value="${esc(x?.title || '')}" placeholder="Lavar los platos"></div>
+      <div class="field"><label>Ícono</label><div class="picker" data-pick="icon">${[...MISSION_ICONS, '🙋'].map(i => `<button type="button" class="${i === st.icon ? 'on' : ''}" data-v="${i}">${i}</button>`).join('')}</div></div>
+      <div class="field"><label>Asignar a</label><select name="assignee"><option value="all" ${x?.assignee === 'all' ? 'selected' : ''}>👥 Cualquiera</option>${opts}</select></div>
+      <div class="row">
+        ${g ? `<div class="field"><label>Puntos (XP)</label><input type="number" name="xp" min="0" max="500" step="5" value="${x?.xp ?? 20}"></div>` : ''}
         <div class="field"><label>Fecha límite</label><input type="date" name="due" value="${esc(x?.due || '')}"></div>
       </div>
-      <div class="field"><label>Frecuencia</label><div class="picker wide" data-pick="freq">${Object.entries(FREQ_LABEL).map(([k, l]) => `<button type="button" class="${k === st.freq ? 'on' : ''}" data-v="${k}">${l}</button>`).join('')}</div></div>` : ''}
+      <div class="field"><label>Frecuencia</label><div class="picker wide" data-pick="freq">${Object.entries(FREQ_LABEL).map(([k, l]) => `<button type="button" class="${k === st.freq ? 'on' : ''}" data-v="${k}">${l}</button>`).join('')}</div></div>
+      ${g ? '' : '<p class="muted">Un guardián le asignará los puntos (XP). Hasta entonces, la misión no suma XP ni cuenta para medallas.</p>'}
       <div class="panel-actions">
         ${x ? `<button type="button" class="btn danger" id="delM">🗑 Borrar</button>` : ''}
-        <button type="submit" class="btn teal">${x ? 'Guardar' : g ? '⚔️ Publicar misión' : '📨 Enviar'}</button>
+        <button type="submit" class="btn teal">${x ? 'Guardar' : '⚔️ Publicar misión'}</button>
       </div>
     </form>`, root => {
     bindPickers(root, st);
@@ -466,12 +478,14 @@ function missionForm(id) {
       const mid = id || uid();
       const data = {
         ...(x || {}), title: f.get('title').trim(), icon: st.icon, assignee: f.get('assignee'),
-        xp: g ? Number(f.get('xp')) || 0 : 0, freq: g ? st.freq : 'once', due: g ? f.get('due') : '',
+        xp: g ? Number(f.get('xp')) || 0 : 0, freq: st.freq, due: f.get('due') || '',
         createdBy: x?.createdBy || me, created: x?.created || Date.now(),
       };
-      store.update({ [`missions/${mid}`]: data });
+      const c = { [`missions/${mid}`]: data };
+      if (!x && !g) c[`notes/${uid()}`] = { system: true, text: `📝 ${meM().name} creó la misión «${data.title}» (falta asignarle XP)`, ts: Date.now() };
+      store.update(c);
       closeModal();
-      toast(x ? 'Misión actualizada' : g ? '⚔️ ¡Misión publicada!' : '📨 Petición enviada');
+      toast(x ? 'Misión actualizada' : '⚔️ ¡Misión publicada!');
     };
     const del = $('#delM', root);
     if (del) del.onclick = () => { if (confirm('¿Borrar esta misión?')) { store.update({ [`missions/${id}`]: null }); closeModal(); } };
