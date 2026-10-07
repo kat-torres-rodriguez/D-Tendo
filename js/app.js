@@ -75,6 +75,7 @@ const MEDALS = [
 ];
 
 const XP_PURCHASE = 25;
+const XP_MAX_HERO = 50; // máximo de XP por misión creada por un héroe
 const XP_COOK = 30;
 
 // ═══════════════ Estado ═══════════════
@@ -461,7 +462,7 @@ function missionForm(id) {
       <div class="field"><label>Ícono</label><div class="picker" data-pick="icon">${[...MISSION_ICONS, '🙋'].map(i => `<button type="button" class="${i === st.icon ? 'on' : ''}" data-v="${i}">${i}</button>`).join('')}</div></div>
       <div class="field"><label>Asignar a</label><select name="assignee"><option value="all" ${x?.assignee === 'all' ? 'selected' : ''}>👥 Cualquiera</option>${opts}</select></div>
       <div class="row">
-        <div class="field"><label>Puntos (XP)</label><input type="number" name="xp" min="0" max="500" step="5" value="${x?.xp ?? 20}"></div>
+        <div class="field"><label>Puntos (XP)${g ? '' : ` · máx ${XP_MAX_HERO}`}</label><input type="number" name="xp" min="0" max="${g ? 500 : XP_MAX_HERO}" step="5" value="${x?.xp ?? 20}"></div>
         <div class="field"><label>Fecha límite</label><input type="date" name="due" value="${esc(x?.due || '')}"></div>
       </div>
       <div class="field"><label>Frecuencia</label><div class="picker wide" data-pick="freq">${Object.entries(FREQ_LABEL).map(([k, l]) => `<button type="button" class="${k === st.freq ? 'on' : ''}" data-v="${k}">${l}</button>`).join('')}</div></div>
@@ -477,7 +478,7 @@ function missionForm(id) {
       const mid = id || uid();
       const data = {
         ...(x || {}), title: f.get('title').trim(), icon: st.icon, assignee: f.get('assignee'),
-        xp: Number(f.get('xp')) || 0, freq: st.freq, due: f.get('due') || '',
+        xp: Math.max(0, Math.min(Number(f.get('xp')) || 0, g ? 500 : XP_MAX_HERO)), freq: st.freq, due: f.get('due') || '',
         createdBy: x?.createdBy || me, created: x?.created || Date.now(),
       };
       const c = { [`missions/${mid}`]: data };
