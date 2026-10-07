@@ -142,9 +142,9 @@ function renderNoFamily() {
     <div class="splash">
       <div class="logo">Casa Quest<small>— LA AVENTURA DEL HOGAR —</small></div>
       <div class="panel"><div class="ribbon">Bienvenido</div>
-        <p>Para unirte a tu familia, <b>escanea el código QR</b> que está en la casa.</p>
-        <p class="muted">¿Eres quien la configura por primera vez? Crea un nuevo reino familiar:</p>
-        <button class="btn teal block" id="newFamily">✨ Crear nueva familia</button>
+        <p>Para entrar, <b>escanea el código QR</b> que está en la casa.</p>
+        <p class="muted">¿Eres quien la configura por primera vez? Crea un nuevo reino:</p>
+        <button class="btn teal block" id="newFamily">✨ Crear nuevo reino</button>
       </div>
     </div>`;
   $('#newFamily').onclick = () => {
@@ -245,7 +245,7 @@ function setupHTML() {
     <div class="logo">Casa Quest<small>— LA AVENTURA DEL HOGAR —</small></div>
     <form class="panel" id="setupForm" style="text-align:left">
       <div class="ribbon">Funda tu reino</div>
-      <div class="field"><label>Nombre de la familia</label><input type="text" name="family" placeholder="Familia Torres" required maxlength="30"></div>
+      <div class="field"><label>Nombre del reino</label><input type="text" name="family" placeholder="Reino Torres" required maxlength="30"></div>
       <div class="field"><label>Tu nombre (guardián / adulto)</label><input type="text" name="g" placeholder="Mamá" required maxlength="20"></div>
       <div class="field"><label>Nombre del héroe (adolescente)</label><input type="text" name="h" placeholder="Tomás" required maxlength="20"></div>
       <div class="field"><label>PIN de guardián (4 dígitos, para crear misiones y premios)</label><input type="password" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required placeholder="••••"></div>
@@ -856,7 +856,7 @@ function wallHTML() {
   <section class="panel">
     <div class="ribbon">📜 Muro del reino</div>
     <form id="noteForm">
-      <textarea name="text" maxlength="200" placeholder="Deja un mensaje para la familia... 💌" required style="min-height:64px"></textarea>
+      <textarea name="text" maxlength="200" placeholder="Deja un mensaje... 💌" required style="min-height:64px"></textarea>
       <div class="row" style="align-items:center;margin-top:8px">
         <div class="picker" data-pick="color" style="flex:2">${NOTE_COLORS.map((c, i) => `<button type="button" class="n-${c} ${i === 0 ? 'on' : ''}" data-v="${c}" style="width:30px;height:30px" aria-label="${c}"></button>`).join('')}</div>
         <button class="btn teal small" style="flex:0 0 auto">📌 Pegar</button>
@@ -927,7 +927,7 @@ function guildHTML() {
   <section class="panel">
     <div class="ribbon">🛡️ Guardianes</div>
     ${g ? `
-      <div class="field"><label>Nombre de la familia</label><input type="text" id="familyName" value="${esc(S.settings.family || '')}" maxlength="30"></div>
+      <div class="field"><label>Nombre del reino</label><input type="text" id="familyName" value="${esc(S.settings.family || '')}" maxlength="30"></div>
       <div class="sub">Integrantes</div>
       ${members().map(x => `<div class="card">${avatarHTML(x, 'sm')}<div class="grow"><div class="title">${esc(x.name)}</div><div class="meta"><span class="chip">${x.role === 'guardian' ? '🛡️ Guardián' : '⚔️ Héroe'}</span><span class="chip">${x.xp || 0} XP</span></div></div>
         ${x.key !== undefined && x.key !== null ? `<button class="bubble xs gem-amber" data-act="resetKey" data-id="${x.id}" title="Reiniciar clave">🔢</button>` : ''}
@@ -1159,7 +1159,7 @@ function saveMyName() {
 function onChangeEvt(e) {
   const t = e.target;
   if (t.id === 'myName') saveMyName();
-  if (t.id === 'familyName' && t.value.trim() && isGuardian()) { store.update({ 'settings/family': t.value.trim().slice(0, 30) }); toast('🏰 Nombre de la familia actualizado'); }
+  if (t.id === 'familyName' && t.value.trim() && isGuardian()) { store.update({ 'settings/family': t.value.trim().slice(0, 30) }); toast('🏰 Nombre del reino actualizado'); }
   if (t.dataset.act === 'checkQty') store.update({ [`shopChecks/${t.dataset.key}`]: Math.max(0, Number(t.value) || 0) });
   if (t.id === 'photoIn' && t.files[0]) {
     resizeImage(t.files[0]).then(url => store.update({ [`members/${me}/photo`]: url })).catch(() => toast('No se pudo leer la imagen'));
