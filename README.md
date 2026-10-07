@@ -57,7 +57,8 @@ git branch -M main && git remote add origin https://github.com/TU-USUARIO/casa-q
 1. Abre esa dirección y pulsa **Crear nueva familia**. Se genera una clave secreta en el enlace (`#k=...`).
 2. Completa el formulario: nombre de la familia, tu nombre, el del héroe y un PIN de 4 dígitos.
 3. Toca tu avatar → **Código QR** → **Imprimir**, y pégalo en el refrigerador 🧲.
-4. Quien escanee el QR elige su personaje. Los guardianes entran con el PIN.
+4. Quien escanee el QR elige su personaje. La primera vez crea su **clave personal de 1 número** (no se puede repetir entre integrantes); después entra tocando ese número. Los guardianes, además, escriben el PIN.
+5. Cada uno puede cambiar su nombre (no se permiten nombres repetidos) y su clave desde su avatar. Si alguien olvida su clave, un guardián la reinicia con el botón 🔢 en la lista de integrantes.
 
 ⚠️ **No compartas el enlace con la clave fuera de la familia**: quien lo tenga puede entrar.
 

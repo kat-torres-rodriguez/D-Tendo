@@ -94,6 +94,10 @@ const meM = () => (S.members || {})[me];
 const isGuardian = () => meM()?.role === 'guardian' && unlocked;
 const memberById = id => (S.members || {})[id];
 
+// Nombres y claves personales no se pueden repetir entre integrantes.
+const nameTaken = (name, exceptId) => members().some(x => x.id !== exceptId && norm(x.name) === norm(name));
+const keyTaken = (key, exceptId) => members().some(x => x.id !== exceptId && String(x.key) === String(key));
+
 function avatarHTML(m, cls = '') {
   if (!m) return `<div class="avatar ${cls}">❔</div>`;
   return `<div class="avatar ${cls}">${m.photo ? `<img src="${esc(m.photo)}" alt="">` : esc(m.avatar || '🧝')}</div>`;
@@ -257,6 +261,7 @@ function bindSetup() {
     document.activeElement?.blur();
     const f = new FormData(e.target);
     const now = Date.now();
+    if (norm(f.get('g')) === norm(f.get('h'))) { toast('El guardián y el héroe deben tener nombres distintos'); return; }
     const g = uid(), h = uid() + 'h';
     const c = {
       settings: { family: f.get('family').trim(), pin: f.get('pin'), created: now },
@@ -885,7 +890,8 @@ function guildHTML() {
     <div style="display:flex;gap:14px;align-items:center">
       ${avatarHTML(m, 'lg')}
       <div class="grow" style="flex:1">
-        <div class="field"><label>Nombre</label><input type="text" id="myName" value="${esc(m.name)}" maxlength="20"></div>
+        <div class="field"><label>Mi nombre</label>
+          <div class="row"><input type="text" id="myName" value="${esc(m.name)}" maxlength="20"><button class="btn small teal" data-act="saveName" style="flex:0 0 auto">✓</button></div></div>
       </div>
     </div>
     <div class="field" style="margin-top:10px"><label>Avatar</label>
@@ -894,6 +900,7 @@ function guildHTML() {
     <div class="panel-actions">
       <label class="btn ghost small" style="cursor:pointer">🖼️ Subir imagen<input type="file" accept="image/*" id="photoIn" hidden></label>
       ${m.photo ? `<button class="btn ghost small" data-act="clearPhoto">Quitar imagen</button>` : ''}
+      <button class="btn ghost small" data-act="changeKey">🔢 Cambiar mi clave</button>
       <button class="btn small" data-act="switchUser">🔄 Cambiar de personaje</button>
     </div>
     <div class="panel-actions" style="justify-content:space-between;align-items:center">
@@ -923,6 +930,7 @@ function guildHTML() {
       <div class="field"><label>Nombre de la familia</label><input type="text" id="familyName" value="${esc(S.settings.family || '')}" maxlength="30"></div>
       <div class="sub">Integrantes</div>
       ${members().map(x => `<div class="card">${avatarHTML(x, 'sm')}<div class="grow"><div class="title">${esc(x.name)}</div><div class="meta"><span class="chip">${x.role === 'guardian' ? '🛡️ Guardián' : '⚔️ Héroe'}</span><span class="chip">${x.xp || 0} XP</span></div></div>
+        ${x.key !== undefined && x.key !== null ? `<button class="bubble xs gem-amber" data-act="resetKey" data-id="${x.id}" title="Reiniciar clave">🔢</button>` : ''}
         ${x.id !== me ? `<button class="bubble xs gem-red" data-act="delMember" data-id="${x.id}" title="Quitar">✕</button>` : ''}</div>`).join('')}
       <div class="panel-actions"><button class="btn teal small" data-act="newMember">➕ Agregar integrante</button></div>
       <div class="sub">Seguridad</div>
@@ -967,9 +975,48 @@ function memberForm() {
     $('#nm', root).onsubmit = e => {
       e.preventDefault();
       const f = new FormData(e.target);
+      if (nameTaken(f.get('name'))) { toast('Ya hay alguien con ese nombre'); return; }
       store.update({ [`members/${uid()}`]: { name: f.get('name').trim(), avatar: st.avatar, role: st.role, xp: 0, coins: 0, created: Date.now() } });
       closeModal();
     };
+  });
+}
+
+// Teclado de burbujas para la clave personal de 1 dígito.
+function keypad(title, text, onDigit) {
+  openModal(title, `
+    <p style="text-align:center;margin:0 0 14px">${text}</p>
+    <div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(d => `<button type="button" class="bubble lg ${GEMS[d % GEMS.length]}" data-d="${d}">${d}</button>`).join('')}</div>
+    <p class="muted" id="keyErr" style="text-align:center;min-height:20px;margin:12px 0 0"></p>`, root => {
+    $('.keypad', root).addEventListener('click', e => {
+      const b = e.target.closest('[data-d]');
+      if (!b) return;
+      const err = onDigit(b.dataset.d);
+      if (err) {
+        $('#keyErr', root).textContent = err;
+        const k = $('.keypad', root);
+        k.classList.remove('shake'); void k.offsetWidth; k.classList.add('shake');
+      }
+    });
+  });
+}
+
+// Crear la clave (la primera vez o al cambiarla). Devuelve un mensaje de error o nada.
+function createKey(m, then) {
+  keypad('🔢 Crea tu clave', `Hola <b>${esc(m.name)}</b>, elige un número secreto.<br><span class="muted">Lo usarás para entrar con tu personaje.</span>`, d => {
+    if (keyTaken(d, m.id)) return '❌ Ese número ya lo usa otra persona. Elige otro.';
+    store.update({ [`members/${m.id}/key`]: d });
+    closeModal();
+    toast(`🔢 Clave guardada: recuerda tu número`);
+    then?.();
+  });
+}
+
+function askKey(m, then) {
+  keypad(`${m.avatar || '🧝'} ${m.name}`, 'Toca tu número secreto', d => {
+    if (String(m.key) !== d) return '❌ Ese no es tu número';
+    closeModal();
+    then();
   });
 }
 
@@ -1018,9 +1065,10 @@ function onClick(e) {
   const id = t.dataset.id;
   switch (t.dataset.act) {
     case 'pickMe': {
-      const m = memberById(id);
+      const m = { ...memberById(id), id };
       const go = ok => { me = id; ls.set('me', id); unlocked = ok; ls.set('unlocked', ok); render(); toast(`¡Bienvenido/a, ${m.name}! ✨`); };
-      if (m.role === 'guardian') askPin(go); else go(false);
+      const next = () => (m.role === 'guardian' ? askPin(go) : go(false));
+      if (m.key === undefined || m.key === null) createKey(m, next); else askKey(m, next);
       break;
     }
     case 'profile': tab = 'guild'; ls.set('tab', tab); render(); window.scrollTo({ top: 0 }); break;
@@ -1082,14 +1130,35 @@ function onClick(e) {
       else if (p) toast('El PIN debe tener 4 números');
       break;
     }
+    case 'saveName': saveMyName(); break;
+    case 'changeKey': {
+      const m = meM();
+      askKey(m, () => setTimeout(() => createKey({ ...m, id: me }), 50));
+      break;
+    }
+    case 'resetKey': {
+      const m = memberById(id);
+      if (m && confirm(`¿Borrar la clave de ${m.name}? La próxima vez que entre creará una nueva.`)) { store.update({ [`members/${id}/key`]: null }); toast('🔢 Clave reiniciada'); }
+      break;
+    }
     case 'lock': unlocked = false; ls.set('unlocked', false); render(); break;
     case 'unlock': askPin(ok => { unlocked = ok; ls.set('unlocked', ok); render(); }); break;
   }
 }
 
+function saveMyName() {
+  const input = $('#myName');
+  const name = input?.value.trim().slice(0, 20);
+  const m = meM();
+  if (!input || !name || name === m.name) return;
+  if (nameTaken(name, me)) { toast('Ya hay alguien con ese nombre'); input.value = m.name; return; }
+  store.update({ [`members/${me}/name`]: name });
+  toast('✏️ Nombre actualizado');
+}
+
 function onChangeEvt(e) {
   const t = e.target;
-  if (t.id === 'myName' && t.value.trim()) store.update({ [`members/${me}/name`]: t.value.trim().slice(0, 20) });
+  if (t.id === 'myName') saveMyName();
   if (t.id === 'familyName' && t.value.trim() && isGuardian()) { store.update({ 'settings/family': t.value.trim().slice(0, 30) }); toast('🏰 Nombre de la familia actualizado'); }
   if (t.dataset.act === 'checkQty') store.update({ [`shopChecks/${t.dataset.key}`]: Math.max(0, Number(t.value) || 0) });
   if (t.id === 'photoIn' && t.files[0]) {
