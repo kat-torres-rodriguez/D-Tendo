@@ -920,6 +920,7 @@ function guildHTML() {
   <section class="panel">
     <div class="ribbon">🛡️ Guardianes</div>
     ${g ? `
+      <div class="field"><label>Nombre de la familia</label><input type="text" id="familyName" value="${esc(S.settings.family || '')}" maxlength="30"></div>
       <div class="sub">Integrantes</div>
       ${members().map(x => `<div class="card">${avatarHTML(x, 'sm')}<div class="grow"><div class="title">${esc(x.name)}</div><div class="meta"><span class="chip">${x.role === 'guardian' ? '🛡️ Guardián' : '⚔️ Héroe'}</span><span class="chip">${x.xp || 0} XP</span></div></div>
         ${x.id !== me ? `<button class="bubble xs gem-red" data-act="delMember" data-id="${x.id}" title="Quitar">✕</button>` : ''}</div>`).join('')}
@@ -1089,6 +1090,7 @@ function onClick(e) {
 function onChangeEvt(e) {
   const t = e.target;
   if (t.id === 'myName' && t.value.trim()) store.update({ [`members/${me}/name`]: t.value.trim().slice(0, 20) });
+  if (t.id === 'familyName' && t.value.trim() && isGuardian()) { store.update({ 'settings/family': t.value.trim().slice(0, 30) }); toast('🏰 Nombre de la familia actualizado'); }
   if (t.dataset.act === 'checkQty') store.update({ [`shopChecks/${t.dataset.key}`]: Math.max(0, Number(t.value) || 0) });
   if (t.id === 'photoIn' && t.files[0]) {
     resizeImage(t.files[0]).then(url => store.update({ [`members/${me}/photo`]: url })).catch(() => toast('No se pudo leer la imagen'));
