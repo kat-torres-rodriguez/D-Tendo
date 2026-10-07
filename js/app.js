@@ -348,7 +348,7 @@ function missionCard(x) {
     <div class="grow">
       <div class="title">${esc(x.title)}</div>
       <div class="meta">
-        ${x.xp ? `<span class="chip xp">✦ ${x.xp} XP</span>` : `<span class="chip warn">✦ XP por asignar</span>`}
+        ${x.xp ? `<span class="chip xp">✦ ${x.xp} XP</span>` : `<span class="chip">sin XP</span>`}
         <span class="chip">${FREQ_LABEL[x.freq] || 'Una vez'}</span>
         ${x.due && x.freq === 'once' ? `<span class="chip ${overdue ? 'bad' : ''}">📅 ${esc(x.due.slice(5).split('-').reverse().join('/'))}</span>` : ''}
         ${who ? `<span class="chip">${avatarHTML(who, 'xs')} ${esc(who.name)}</span>` : `<span class="chip">👥 Cualquiera</span>`}
@@ -375,7 +375,7 @@ function completeMission(id, btn) {
   const before = levelInfo(m.xp).lvl;
   const nm = structuredClone(m);
   let newMedals = [];
-  // Las misiones sin XP (aún no aprobadas por un guardián) no suman racha, conteo ni medallas.
+  // Las misiones sin XP no suman racha, conteo ni medallas.
   if (xp > 0) {
     nm.xp = (nm.xp || 0) + xp; nm.done = (nm.done || 0) + 1;
     Object.assign(c, streakChanges(nm), {
@@ -448,7 +448,7 @@ function awardStat(stat, xp, label) {
   return c;
 }
 
-// Todos pueden crear misiones; solo los guardianes las modifican, borran y les ponen XP.
+// Todos pueden crear misiones con XP; solo los guardianes las modifican, borran y revierten.
 function missionForm(id) {
   const x = id ? S.missions[id] : null;
   const g = isGuardian();
@@ -461,11 +461,10 @@ function missionForm(id) {
       <div class="field"><label>Ícono</label><div class="picker" data-pick="icon">${[...MISSION_ICONS, '🙋'].map(i => `<button type="button" class="${i === st.icon ? 'on' : ''}" data-v="${i}">${i}</button>`).join('')}</div></div>
       <div class="field"><label>Asignar a</label><select name="assignee"><option value="all" ${x?.assignee === 'all' ? 'selected' : ''}>👥 Cualquiera</option>${opts}</select></div>
       <div class="row">
-        ${g ? `<div class="field"><label>Puntos (XP)</label><input type="number" name="xp" min="0" max="500" step="5" value="${x?.xp ?? 20}"></div>` : ''}
+        <div class="field"><label>Puntos (XP)</label><input type="number" name="xp" min="0" max="500" step="5" value="${x?.xp ?? 20}"></div>
         <div class="field"><label>Fecha límite</label><input type="date" name="due" value="${esc(x?.due || '')}"></div>
       </div>
       <div class="field"><label>Frecuencia</label><div class="picker wide" data-pick="freq">${Object.entries(FREQ_LABEL).map(([k, l]) => `<button type="button" class="${k === st.freq ? 'on' : ''}" data-v="${k}">${l}</button>`).join('')}</div></div>
-      ${g ? '' : '<p class="muted">Un guardián le asignará los puntos (XP). Hasta entonces, la misión no suma XP ni cuenta para medallas.</p>'}
       <div class="panel-actions">
         ${x ? `<button type="button" class="btn danger" id="delM">🗑 Borrar</button>` : ''}
         <button type="submit" class="btn teal">${x ? 'Guardar' : '⚔️ Publicar misión'}</button>
@@ -478,11 +477,11 @@ function missionForm(id) {
       const mid = id || uid();
       const data = {
         ...(x || {}), title: f.get('title').trim(), icon: st.icon, assignee: f.get('assignee'),
-        xp: g ? Number(f.get('xp')) || 0 : 0, freq: st.freq, due: f.get('due') || '',
+        xp: Number(f.get('xp')) || 0, freq: st.freq, due: f.get('due') || '',
         createdBy: x?.createdBy || me, created: x?.created || Date.now(),
       };
       const c = { [`missions/${mid}`]: data };
-      if (!x && !g) c[`notes/${uid()}`] = { system: true, text: `📝 ${meM().name} creó la misión «${data.title}» (falta asignarle XP)`, ts: Date.now() };
+      if (!x && !g) c[`notes/${uid()}`] = { system: true, text: `📝 ${meM().name} creó la misión «${data.title}» (${data.xp} XP)`, ts: Date.now() };
       store.update(c);
       closeModal();
       toast(x ? 'Misión actualizada' : '⚔️ ¡Misión publicada!');
