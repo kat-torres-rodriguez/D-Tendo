@@ -1,4 +1,4 @@
-# 🍄 Casa Quest — la aventura del hogar
+# 🍄 
 
 App web familiar con estética de videojuego de bosque encantado. Se abre desde un código QR y no hay que instalar nada.
 
