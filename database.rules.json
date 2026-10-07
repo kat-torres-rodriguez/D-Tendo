@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "familias": {
+      "$familia": {
+        ".read": "$familia.length >= 16",
+        ".write": "$familia.length >= 16"
+      }
+    }
+  }
+}

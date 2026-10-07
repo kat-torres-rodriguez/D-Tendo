@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d2a23">
+  <title>Casa Quest</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍄</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600;800&family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Fondo: bosque encantado -->
+  <div id="forest" aria-hidden="true">
+    <svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#eafff3"/>
+          <stop offset=".22" stop-color="#a6e3c7"/>
+          <stop offset=".5" stop-color="#3f8a70"/>
+          <stop offset=".78" stop-color="#174036"/>
+          <stop offset="1" stop-color="#0a1f1a"/>
+        </linearGradient>
+        <radialGradient id="glow" cx=".5" cy=".33" r=".45">
+          <stop offset="0" stop-color="#f4fff8" stop-opacity=".9"/>
+          <stop offset=".5" stop-color="#bff3da" stop-opacity=".25"/>
+          <stop offset="1" stop-color="#bff3da" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="ray" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity=".35"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="shroomGlow" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#6ff5d6" stop-opacity=".8"/>
+          <stop offset="1" stop-color="#6ff5d6" stop-opacity="0"/>
+        </radialGradient>
+        <g id="leaf"><path d="M0 0 C4 -6 10 -6 12 0 C10 6 4 6 0 0Z"/></g>
+        <g id="flower">
+          <circle r="3.2" cx="0" cy="-3"/><circle r="3.2" cx="3" cy="0"/><circle r="3.2" cx="0" cy="3"/><circle r="3.2" cx="-3" cy="0"/>
+          <circle r="1.8" fill="#ffe08a"/>
+        </g>
+      </defs>
+
+      <rect width="400" height="800" fill="url(#sky)"/>
+      <rect width="400" height="800" fill="url(#glow)"/>
+
+      <!-- Rayos de luz -->
+      <g class="rays">
+        <polygon points="190,120 210,120 280,640 150,640" fill="url(#ray)"/>
+        <polygon points="170,120 185,120 110,600 50,600" fill="url(#ray)" opacity=".6"/>
+        <polygon points="215,120 230,120 360,600 300,600" fill="url(#ray)" opacity=".6"/>
+      </g>
+
+      <!-- Troncos lejanos -->
+      <g fill="#4d927a" opacity=".55">
+        <rect x="120" y="60" width="12" height="560" rx="5"/>
+        <rect x="160" y="40" width="9" height="560" rx="4"/>
+        <rect x="232" y="40" width="10" height="560" rx="4"/>
+        <rect x="268" y="60" width="13" height="560" rx="5"/>
+        <rect x="88" y="80" width="10" height="540" rx="4"/>
+        <rect x="305" y="70" width="11" height="550" rx="4"/>
+      </g>
+      <!-- Troncos medios -->
+      <g fill="#245747" opacity=".85">
+        <path d="M60 0 C70 200 52 420 66 640 L96 640 C84 420 100 200 92 0Z"/>
+        <path d="M318 0 C306 220 330 430 314 640 L346 640 C360 430 336 220 348 0Z"/>
+        <path d="M196 0 C200 60 188 90 192 120 L206 120 C206 90 214 60 210 0Z" opacity=".6"/>
+      </g>
+      <!-- Troncos cercanos (bordes) -->
+      <g fill="#123128">
+        <path d="M-20 0 L48 0 C38 220 54 470 40 680 C60 700 70 720 90 740 L-20 740Z"/>
+        <path d="M420 0 L352 0 C364 230 344 470 360 680 C340 700 326 720 306 740 L420 740Z"/>
+      </g>
+
+      <!-- Copa de los árboles -->
+      <g fill="#0f2c24">
+        <ellipse cx="40" cy="20" rx="120" ry="70"/>
+        <ellipse cx="360" cy="20" rx="120" ry="70"/>
+        <ellipse cx="200" cy="-10" rx="140" ry="50"/>
+      </g>
+      <g fill="#1f5242">
+        <ellipse cx="90" cy="60" rx="70" ry="34"/>
+        <ellipse cx="310" cy="60" rx="70" ry="34"/>
+        <ellipse cx="150" cy="30" rx="60" ry="26"/>
+        <ellipse cx="250" cy="30" rx="60" ry="26"/>
+      </g>
+
+      <!-- Enredaderas con flores -->
+      <g fill="none" stroke="#2f6b4f" stroke-width="2">
+        <path d="M70 60 C90 120 60 170 85 230 C100 270 80 300 95 340"/>
+        <path d="M330 60 C310 130 340 180 318 240 C304 280 322 310 310 350"/>
+        <path d="M140 40 C150 90 132 120 146 160"/>
+        <path d="M262 40 C252 90 270 120 256 170"/>
+        <path d="M0 110 C80 140 120 100 200 125 C280 150 320 105 400 130"/>
+      </g>
+      <g fill="#3f8a5d">
+        <use href="#leaf" x="76" y="100"/><use href="#leaf" x="66" y="160" transform="rotate(-30 66 160)"/>
+        <use href="#leaf" x="88" y="220"/><use href="#leaf" x="84" y="300" transform="rotate(20 84 300)"/>
+        <use href="#leaf" x="322" y="110" transform="rotate(180 322 110)"/><use href="#leaf" x="330" y="190" transform="rotate(200 330 190)"/>
+        <use href="#leaf" x="318" y="270" transform="rotate(160 318 270)"/>
+        <use href="#leaf" x="40" y="128"/><use href="#leaf" x="170" y="118"/><use href="#leaf" x="240" y="135" transform="rotate(180 240 135)"/>
+        <use href="#leaf" x="360" y="122" transform="rotate(180 360 122)"/>
+      </g>
+      <g fill="#f2a7b8">
+        <use href="#flower" x="92" y="130"/><use href="#flower" x="80" y="250"/>
+        <use href="#flower" x="316" y="150"/><use href="#flower" x="326" y="300"/>
+        <use href="#flower" x="120" y="112"/><use href="#flower" x="290" y="120"/>
+        <use href="#flower" x="146" y="160"/><use href="#flower" x="256" y="170"/>
+      </g>
+      <g fill="#e9c46a">
+        <use href="#flower" x="200" y="124"/><use href="#flower" x="30" y="122"/><use href="#flower" x="372" y="128"/>
+      </g>
+
+      <!-- Suelo -->
+      <path d="M0 610 C80 580 150 600 200 590 C260 580 330 600 400 585 L400 800 L0 800Z" fill="#1b4a3b"/>
+      <path d="M0 650 C90 630 160 655 220 640 C290 625 350 650 400 640 L400 800 L0 800Z" fill="#133a2f"/>
+      <g fill="#245e48">
+        <ellipse cx="30" cy="630" rx="60" ry="28"/>
+        <ellipse cx="370" cy="625" rx="60" ry="28"/>
+        <ellipse cx="120" cy="650" rx="40" ry="16"/>
+        <ellipse cx="290" cy="648" rx="44" ry="16"/>
+      </g>
+
+      <!-- Hongos -->
+      <g class="shroom">
+        <circle cx="60" cy="625" r="40" fill="url(#shroomGlow)" opacity=".5"/>
+        <rect x="54" y="610" width="12" height="26" rx="5" fill="#f3e6c4"/>
+        <path d="M38 614 C40 592 80 592 82 614Z" fill="#c9443f"/>
+        <circle cx="52" cy="604" r="3" fill="#fff4e0"/><circle cx="66" cy="600" r="2.4" fill="#fff4e0"/><circle cx="74" cy="608" r="2" fill="#fff4e0"/>
+      </g>
+      <g class="shroom">
+        <rect x="346" y="606" width="14" height="30" rx="6" fill="#f3e6c4"/>
+        <path d="M326 610 C328 582 378 582 380 610Z" fill="#c9443f"/>
+        <circle cx="342" cy="598" r="3.4" fill="#fff4e0"/><circle cx="358" cy="592" r="2.6" fill="#fff4e0"/><circle cx="368" cy="602" r="2.4" fill="#fff4e0"/>
+        <rect x="372" y="622" width="8" height="16" rx="3" fill="#f3e6c4"/>
+        <path d="M364 624 C365 612 386 612 388 624Z" fill="#d86a4c"/>
+      </g>
+      <g class="shroom glowy">
+        <circle cx="300" cy="640" r="26" fill="url(#shroomGlow)" opacity=".7"/>
+        <rect x="296" y="632" width="7" height="14" rx="3" fill="#bdf7e8"/>
+        <path d="M288 634 C289 622 310 622 311 634Z" fill="#5fe0c4"/>
+        <circle cx="110" cy="652" r="22" fill="url(#shroomGlow)" opacity=".6"/>
+        <rect x="107" y="646" width="6" height="12" rx="3" fill="#bdf7e8"/>
+        <path d="M100 648 C101 638 119 638 120 648Z" fill="#5fe0c4"/>
+      </g>
+    </svg>
+    <div id="fireflies"></div>
+  </div>
+
+  <div id="app"></div>
+  <div id="fx" aria-hidden="true"></div>
+  <div id="modal-root"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
