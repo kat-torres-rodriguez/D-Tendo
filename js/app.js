@@ -94,9 +94,8 @@ const meM = () => (S.members || {})[me];
 const isGuardian = () => meM()?.role === 'guardian' && unlocked;
 const memberById = id => (S.members || {})[id];
 
-// Nombres y claves personales no se pueden repetir entre integrantes.
+// Los nombres no se pueden repetir entre integrantes.
 const nameTaken = (name, exceptId) => members().some(x => x.id !== exceptId && norm(x.name) === norm(name));
-const keyTaken = (key, exceptId) => members().some(x => x.id !== exceptId && String(x.key) === String(key));
 
 function avatarHTML(m, cls = '') {
   if (!m) return `<div class="avatar ${cls}">❔</div>`;
@@ -1004,7 +1003,6 @@ function keypad(title, text, onDigit) {
 // Crear la clave (la primera vez o al cambiarla). Devuelve un mensaje de error o nada.
 function createKey(m, then) {
   keypad('🔢 Crea tu clave', `Hola <b>${esc(m.name)}</b>, elige un número secreto.<br><span class="muted">Lo usarás para entrar con tu personaje.</span>`, d => {
-    if (keyTaken(d, m.id)) return '❌ Ese número ya lo usa otra persona. Elige otro.';
     store.update({ [`members/${m.id}/key`]: d });
     closeModal();
     toast(`🔢 Clave guardada: recuerda tu número`);
